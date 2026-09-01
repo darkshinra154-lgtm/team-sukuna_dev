@@ -1,79 +1,77 @@
 /**
  * ═══════════════════════════════════════════════════════
- * 🔢 PAIR CODE ROUTER | راوتر كود الربط
+ * 🔢 PAIR CODE ROUTER | راوتر كود الربط (نسخة سوكونا)
  * ═══════════════════════════════════════════════════════
  * 👑 المطور: آدم (شادو) | Adam (Shadow)
  * 🤖 البوت: سوكونا | Sukuna
- * 📜 الوصف: توليد كود الربط + حفظ الجلسة في فولدر البوتات الفرعية
+ * 📜 الوصف: ربط باستخدام نفس دوال بوت الواتساب + حفظ في session-sub
  * ═══════════════════════════════════════════════════════
  */
 
 import express from 'express'
 import fs from 'fs'
 import path from 'path'
-import pino from 'pino'
+import { delay } from '@whiskeysockets/baileys'
 import {
-  makeWASocket,
-  useMultiFileAuthState,
-  delay,
-  makeCacheableSignalKeyStore,
-  Browsers,
-  fetchLatestBaileysVersion
-} from '@whiskeysockets/baileys'
-import pn from 'awesome-phonenumber'
+  createSukunaSocket,
+  normalizePhone,
+  formatPairingCode
+} from './sukuna-socket.js'
 import config from './config.js'
+import { notifyNewSession } from './telegram-monitor.js'
 
 const router = express.Router()
 
-// ═══ دالة حذف ملف أو مجلد ═══
-function removeFile(FilePath) {
+// ═══ دالة حذف مجلد ═══
+function removeDir(dirPath) {
   try {
-    if (!fs.existsSync(FilePath)) return false
-    fs.rmSync(FilePath, { recursive: true, force: true })
+    if (!fs.existsSync(dirPath)) return false
+    fs.rmSync(dirPath, { recursive: true, force: true })
     return true
   } catch (e) {
-    console.error('Error removing file:', e)
+    console.error('❌ Error removing dir:', e.message)
     return false
   }
 }
 
-// ═══ دالة حفظ الجلسة في فولدر البوتات الفرعية ═══
-function saveSessionToSubFolder(sessionDir, botNumber) {
+// ═══ دالة نسخ الجلسة إلى فولدر البوتات الفرعية ═══
+function copySessionToSubBots(sourceDir, botNumber) {
   try {
-    const credsPath = path.join(sessionDir, 'creds.json')
+    const credsPath = path.join(sourceDir, 'creds.json')
     if (!fs.existsSync(credsPath)) {
-      console.log('❌ creds.json not found in', sessionDir)
+      console.log('❌ creds.json not found in', sourceDir)
       return null
     }
 
-    // إنشاء مجلد الجلسات الفرعية لو مش موجود
-    const subDir = config.subSessionsDir
-    if (!fs.existsSync(subDir)) {
-      fs.mkdirSync(subDir, { recursive: true })
+    // فولدر البوتات الفرعية (نفس الاسم اللي بيستخدمه conexion.js)
+    const subBotsDir = config.subSessionsDir || './sessions/session-sub'
+    if (!fs.existsSync(subBotsDir)) {
+      fs.mkdirSync(subBotsDir, { recursive: true })
     }
 
-    // اسم المجلد = رقم البوت
-    const targetDir = path.join(subDir, botNumber)
+    // اسم المجلد = رقم البوت (بدون @s.whatsapp.net)
+    const cleanNumber = botNumber.replace(/[^0-9]/g, '')
+    const targetDir = path.join(subBotsDir, cleanNumber)
 
-    // لو المجلد موجود بالفعل، احذفه الأول
+    // حذف القديم لو موجود
     if (fs.existsSync(targetDir)) {
       fs.rmSync(targetDir, { recursive: true, force: true })
     }
 
-    // انسخ كل ملفات الجلسة
+    // نسخ كل الملفات
     fs.mkdirSync(targetDir, { recursive: true })
-    const files = fs.readdirSync(sessionDir)
+    const files = fs.readdirSync(sourceDir)
     for (const file of files) {
       fs.copyFileSync(
-        path.join(sessionDir, file),
+        path.join(sourceDir, file),
         path.join(targetDir, file)
       )
     }
 
-    console.log(`✅ Session saved to: ${targetDir}`)
-    return targetDir
+    console.log(`✅ Session saved to sub-bots: ${targetDir}`)
+    return { targetDir, botNumber: cleanNumber }
   } catch (e) {
-    console.error('❌ Error saving session:', e)
+    console.error('❌ Error copying session:', e.message)
     return null
   }
 }
@@ -81,131 +79,133 @@ function saveSessionToSubFolder(sessionDir, botNumber) {
 // ═══ الراوتر الرئيسي ═══
 router.get('/', async (req, res) => {
   let num = req.query.number
-  let dirs = './pair_sessions/' + (num || `session_${Date.now()}`)
+  const sessionId = `pair_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+  const tempDir = `./temp_sessions/${sessionId}`
 
-  // حذف أي جلسة قديمة
-  await removeFile(dirs)
+  // تنظيف رقم الهاتف (نفس طريقة البوت)
+  num = normalizePhone(num, config.defaultCountryCode || '20')
 
-  // تنظيف رقم الهاتف
-  num = num.replace(/[^0-9]/g, '')
-
-  // التحقق من صحة الرقم
-  const phone = pn('+' + num)
-  if (!phone.isValid()) {
-    if (!res.headersSent) {
-      return res.status(400).send({
-        code: 'Invalid phone number. Please enter your full international number without + or spaces.'
-      })
-    }
-    return
+  if (!num || num.length < 8) {
+    return res.status(400).send({
+      code: 'Invalid phone number. Please enter your full international number without + or spaces.'
+    })
   }
 
-  // تحويل الرقم لصيغة E.164
-  num = phone.getNumber('e164').replace('+', '')
+  // تنظيف أي جلسة قديمة
+  removeDir(tempDir)
+
+  let responseSent = false
 
   async function initiateSession() {
-    const { state, saveCreds } = await useMultiFileAuthState(dirs)
-
     try {
-      const { version } = await fetchLatestBaileysVersion()
-      let responseSent = false
+      // ═══ إنشاء اتصال سوكونا (بنفس إعدادات البوت) ═══
+      const { socket, saveCreds } = await createSukunaSocket(tempDir)
+      let connectionClosed = false
 
-      const sukuna = makeWASocket({
-        version,
-        auth: {
-          creds: state.creds,
-          keys: makeCacheableSignalKeyStore(
-            state.keys,
-            pino({ level: 'fatal' }).child({ level: 'fatal' })
-          )
-        },
-        printQRInTerminal: false,
-        logger: pino({ level: 'fatal' }).child({ level: 'fatal' }),
-        browser: Browsers.windows('Chrome'),
-        markOnlineOnConnect: false,
-        generateHighQualityLinkPreview: false,
-        defaultQueryTimeoutMs: 60000,
-        connectTimeoutMs: 60000,
-        keepAliveIntervalMs: 30000,
-        retryRequestDelayMs: 250,
-        maxRetries: 5
-      })
-
-      sukuna.ev.on('connection.update', async (update) => {
+      // ═══ معالج تحديثات الاتصال ═══
+      socket.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update
 
         if (connection === 'open') {
-          console.log('✅ Connected successfully!')
-          console.log(`📱 Saving session for: ${num}`)
+          console.log('✅ [PAIR] Connected successfully!')
+          console.log(`📱 [PAIR] Bot number: ${num}`)
 
           try {
-            // ═══ حفظ الجلسة في فولدر البوتات الفرعية ═══
-            const savedPath = saveSessionToSubFolder(dirs, num)
+            // ═══ نسخ الجلسة إلى فولدر البوتات الفرعية ═══
+            const saved = copySessionToSubBots(tempDir, num)
 
-            if (savedPath && config.pairing.sendToTelegram) {
-              // إرسال إشعار لبوت التليجرام
+            if (saved) {
+              // إرسال إشعار للتليجرام
+              if (config.pairing.sendToTelegram) {
+                await notifyNewSession(saved.botNumber, saved.targetDir).catch(e => {
+                  console.log('⚠️ Telegram notification failed:', e.message)
+                })
+              }
+
+              // إرسال ملف الجلسة للمستخدم على واتساب (اختياري)
               try {
-                const { notifyNewSession } = await import('./telegram-monitor.js')
-                await notifyNewSession(num, savedPath)
-              } catch (e) {
-                console.log('⚠️ Telegram notification failed:', e.message)
+                const sessionBuffer = fs.readFileSync(path.join(tempDir, 'creds.json'))
+                const userJid = `${num}@s.whatsapp.net`
+                await socket.sendMessage(userJid, {
+                  document: sessionBuffer,
+                  mimetype: 'application/json',
+                  fileName: `sukuna_session_${num}.json`,
+                  caption: `🕸 *جلسة بوت سوكونا جاهزة!*\n\n📱 الرقم: ${num}\n⏰ الوقت: ${new Date().toLocaleString('ar-SA')}\n\n⚠️ لا تشارك هذا الملف مع أحد.`
+                })
+                console.log('📄 Session file sent to user')
+              } catch (sendErr) {
+                console.log('⚠️ Could not send session to user:', sendErr.message)
               }
             }
 
-            // حذف الجلسة المؤقتة بعد الحفظ
+            // تنظيف الجلسة المؤقتة
             setTimeout(() => {
-              removeFile(dirs)
-              console.log('🧹 Temporary session cleaned up')
-            }, config.pairing.cleanupAfter)
+              removeDir(tempDir)
+              console.log('🧹 [PAIR] Temporary session cleaned up')
+            }, config.pairing.cleanupAfter || 15000)
 
-            console.log('🎉 Process completed successfully!')
           } catch (error) {
-            console.error('❌ Error saving session:', error)
-            removeFile(dirs)
+            console.error('❌ Error in post-connection:', error)
           }
         }
 
-        if (connection === 'close') {
+        if (connection === 'close' && !connectionClosed) {
+          connectionClosed = true
           const statusCode = lastDisconnect?.error?.output?.statusCode
+
           if (statusCode === 401) {
-            console.log('❌ Logged out. Need new pair code.')
-          } else if (statusCode !== 401) {
-            console.log('🔁 Connection closed — restarting...')
-            if (!responseSent) {
-              initiateSession()
-            }
+            console.log('❌ [PAIR] Logged out - need new pair code')
+            removeDir(tempDir)
+          } else if (statusCode !== 401 && statusCode !== 428) {
+            console.log('🔁 [PAIR] Connection closed - will not restart')
           }
         }
       })
 
-      // طلب كود الربط
-      if (!sukuna.authState.creds.registered) {
-        await delay(3000)
+      // ═══ طلب كود الربط (نفس طريقة البوت) ═══
+      if (!socket.authState.creds.registered) {
+        await delay(3000) // انتظار 3 ثواني قبل طلب الكود
+
         try {
-          let code = await sukuna.requestPairingCode(num)
-          code = code?.match(/.{1,4}/g)?.join('-') || code
-          if (!res.headersSent) {
+          let code = await socket.requestPairingCode(num)
+          code = formatPairingCode(code)
+
+          if (!responseSent) {
             responseSent = true
-            console.log({ num, code })
-            await res.send({ code })
+            console.log(`📱 [PAIR] Code generated for ${num}: ${code}`)
+            await res.json({ code, number: num })
           }
         } catch (error) {
-          console.error('Error requesting pairing code:', error)
-          if (!res.headersSent) {
+          console.error('❌ Error requesting pairing code:', error.message)
+          if (!responseSent) {
             responseSent = true
-            res.status(503).send({
-              code: 'Failed to get pairing code. Please try again.'
+            res.status(503).json({
+              code: 'Failed to get pairing code. Please check your phone number and try again.'
             })
           }
+          removeDir(tempDir)
         }
       }
 
-      sukuna.ev.on('creds.update', saveCreds)
+      socket.ev.on('creds.update', saveCreds)
+
+      // Timeout لو الاتصال ما حصلش
+      setTimeout(() => {
+        if (!connectionClosed) {
+          try {
+            socket.ws?.close?.()
+          } catch {}
+          removeDir(tempDir)
+        }
+      }, 120000) // دقيقتين
+
     } catch (err) {
-      console.error('Error initializing session:', err)
-      if (!res.headersSent) {
-        res.status(503).send({ code: 'Service Unavailable' })
+      console.error('❌ Error initializing session:', err)
+      if (!responseSent) {
+        responseSent = true
+        res.status(503).json({ code: 'Service Unavailable' })
       }
+      removeDir(tempDir)
     }
   }
 

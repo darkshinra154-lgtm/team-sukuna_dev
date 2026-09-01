@@ -15,13 +15,11 @@ import path from 'path'
 import fs from 'fs'
 import config from './config.js'
 
-// استيراد الراوترات
 import pairRouter from './pair.js'
 import qrRouter from './qr.js'
 import { startTelegramMonitor } from './telegram-monitor.js'
 
 const app = express()
-
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const PORT = config.PORT
@@ -35,8 +33,7 @@ import('events').then(events => {
 const dirs = [
   config.sessionsDir,
   config.subSessionsDir,
-  './pair_sessions',
-  './qr_sessions'
+  config.tempSessionsDir
 ]
 
 for (const dir of dirs) {
@@ -64,7 +61,9 @@ app.get('/api/sessions', (req, res) => {
   try {
     const subDir = config.subSessionsDir
     const sessions = fs.readdirSync(subDir).filter(s => {
-      return fs.existsSync(path.join(subDir, s, 'creds.json'))
+      try {
+        return fs.existsSync(path.join(subDir, s, 'creds.json'))
+      } catch { return false }
     })
     res.json({ sessions, count: sessions.length })
   } catch (e) {
@@ -90,12 +89,13 @@ app.delete('/api/session/:number', (req, res) => {
 
 // ═══ تشغيل السيرفر ═══
 app.listen(PORT, async () => {
-  console.log('╔════════════════════════════════════════╗')
-  console.log('║   🕸 SUKUNA PLATFORM IS RUNNING! 🕸   ║')
-  console.log('╠════════════════════════════════════════╣')
-  console.log(`║   🌐 Server: http://localhost:${PORT}    ║`)
-  console.log('║   👑 Developer: Adam (Shadow)          ║')
-  console.log('╚════════════════════════════════════════╝')
+  console.log('╔══════════════════════════════════════════════╗')
+  console.log('║   🕸 SUKUNA PLATFORM IS RUNNING! 🕸         ║')
+  console.log('╠══════════════════════════════════════════════╣')
+  console.log(`║   🌐 Server: http://localhost:${PORT}          ║`)
+  console.log(`║   📂 Sub-bots: ${config.subSessionsDir.padEnd(23)}║`)
+  console.log('║   👑 Developer: Adam (Shadow)                ║')
+  console.log('╚══════════════════════════════════════════════╝')
   console.log('')
 
   // تشغيل بوت مراقبة الجلسات

