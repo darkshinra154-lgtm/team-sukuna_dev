@@ -1,7 +1,7 @@
 {
   "name": "sukuna-platform",
   "version": "2.0.0",
-  "description": "Sukuna Bot - WhatsApp Pairing Platform (Same as Main Bot)",
+  "description": "Sukuna Platform - Professional WhatsApp Bot Installer",
   "main": "index.js",
   "type": "module",
   "engines": {
@@ -9,14 +9,15 @@
   },
   "scripts": {
     "start": "node index.js",
-    "build": "echo 'No build step required'"
+    "dev": "node --watch index.js"
   },
   "author": "Adam (Shadow)",
   "license": "ISC",
   "dependencies": {
-    "wileys": "npm:@whiskeysockets/baileys@latest",
+    "@whiskeysockets/baileys": "npm:wileys@latest",
     "awesome-phonenumber": "7.2.0",
     "body-parser": "^1.20.3",
+    "chalk": "^5.3.0",
     "express": "^4.21.2",
     "pino": "9.5.0",
     "qrcode": "^1.5.4",

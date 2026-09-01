@@ -1,198 +1,162 @@
 /**
  * ═══════════════════════════════════════════════════════
- * 🔳 QR CODE ROUTER | راوتر كود الـ QR
+ * 🔳 QR CODE ROUTER | راوتر كود QR (بطريقة البوت الرئيسي)
  * ═══════════════════════════════════════════════════════
  * 👑 المطور: آدم (شادو) | Adam (Shadow)
  * 🤖 البوت: سوكونا | Sukuna
- * 📜 الوصف: ربط QR بنفس طريقة البوت الرئيسي + حفظ الجلسات في session-sub
+ * 🏷️ الحقوق: ${global.author}
+ * 📜 الوصف: توليد QR بنفس إعدادات البوت الرئيسي + حفظ في session-sub
  * ═══════════════════════════════════════════════════════
  */
 
 import express from 'express'
 import fs from 'fs'
-import pino from 'pino'
-import {
-  makeWASocket,
-  useMultiFileAuthState,
-  makeCacheableSignalKeyStore,
-  fetchLatestBaileysVersion
-} from 'wileys'
+import path from 'path'
+import { useMultiFileAuthState, makeWASocket } from '@whiskeysockets/baileys'
 import QRCode from 'qrcode'
-import { removeFile, saveSessionToSubFolder, getBotNumberFromCreds } from './utils.js'
+import { 
+  buildSocketOptions, 
+  removeDir, 
+  saveSessionToSub 
+} from './lib/session-utils.js'
 import config from './config.js'
 
 const router = express.Router()
 
 router.get('/', async (req, res) => {
-  const sessionId = Date.now().toString() + Math.random().toString(36).substr(2, 9)
-  const dirs = `${config.qrSessionsDir}/session_${sessionId}`
+  const sessionId = `qr_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+  const dirs = path.join(config.sessions.qrTemp, sessionId)
 
-  if (!fs.existsSync(config.qrSessionsDir)) {
-    fs.mkdirSync(config.qrSessionsDir, { recursive: true })
+  if (!fs.existsSync(config.sessions.qrTemp)) {
+    fs.mkdirSync(config.sessions.qrTemp, { recursive: true })
   }
 
-  let qrGenerated = false
   let responseSent = false
+  let qrGenerated = false
+  let socket = null
 
   async function initiateSession() {
-    if (!fs.existsSync(dirs)) fs.mkdirSync(dirs, { recursive: true })
-    const { state, saveCreds } = await useMultiFileAuthState(dirs)
-
     try {
-      const { version } = await fetchLatestBaileysVersion()
+      if (!fs.existsSync(dirs)) fs.mkdirSync(dirs, { recursive: true })
+      
+      const { state, saveCreds } = await useMultiFileAuthState(dirs)
+      const socketOptions = await buildSocketOptions(state, sessionId)
+      
+      socket = makeWASocket(socketOptions)
 
-      // ═══ إعدادات السوكيت بنفس طريقة البوت الرئيسي ═══
-      const socketConfig = {
-        version,
-        logger: pino({ level: 'silent' }),
-        browser: config.browser,
-        printQRInTerminal: false,
-        auth: {
-          creds: state.creds,
-          keys: makeCacheableSignalKeyStore(
-            state.keys,
-            pino({ level: 'fatal' }).child({ level: 'fatal' })
-          )
-        },
-        markOnlineOnConnect: false,
-        generateHighQualityLinkPreview: false,
-        syncFullHistory: false,
-        defaultQueryTimeoutMs: config.defaultQueryTimeoutMs,
-        connectTimeoutMs: config.connectTimeoutMs,
-        keepAliveIntervalMs: config.keepAliveIntervalMs,
-        retryRequestDelayMs: config.retryRequestDelayMs,
-        maxRetries: config.maxRetries
-      }
-
-      let sock = makeWASocket(socketConfig)
-      let reconnectAttempts = 0
-      const maxReconnectAttempts = 3
-
-      // ═══ معالجة كود QR ═══
-      const handleQRCode = async (qr) => {
-        if (qrGenerated || responseSent) return
-        qrGenerated = true
-        console.log('🟢 QR Code Generated!')
-
-        try {
-          const qrDataURL = await QRCode.toDataURL(qr, {
-            errorCorrectionLevel: 'M',
-            type: 'image/png',
-            quality: 0.92,
-            margin: 1,
-            color: { dark: '#000000', light: '#FFFFFF' }
-          })
-
-          if (!responseSent) {
-            responseSent = true
-            await res.send({
-              qr: qrDataURL,
-              message: 'QR Code Generated! امسحه بكاميرا واتساب.',
-              instructions: [
-                '1. افتح واتساب على موبايلك',
-                '2. روح إلى ⚙️ الإعدادات ← الأجهزة المرتبطة 🔗',
-                '3. اضغط "ربط جهاز"',
-                '4. امسح الكود اللي فوق'
-              ]
-            })
-          }
-        } catch (qrError) {
-          console.error('❌ Error generating QR code:', qrError.message)
-          if (!responseSent) {
-            responseSent = true
-            res.status(500).send({ code: 'فشل توليد كود QR' })
-          }
-        }
-      }
-
-      // ═══ مراقبة حالة الاتصال ═══
-      const handleConnectionUpdate = async (update) => {
+      socket.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update
 
         if (qr && !qrGenerated) {
-          await handleQRCode(qr)
+          qrGenerated = true
+          try {
+            const qrDataURL = await QRCode.toDataURL(qr, {
+              errorCorrectionLevel: 'M',
+              type: 'image/png',
+              quality: 0.92,
+              margin: 1,
+              color: { dark: '#000000', light: '#FFFFFF' }
+            })
+
+            if (!responseSent) {
+              responseSent = true
+              console.log(`🟢 [QR] Generated: ${sessionId}`)
+              return res.json({
+                success: true,
+                qr: qrDataURL,
+                message: 'تم توليد كود QR بنجاح',
+                instructions: [
+                  '1️⃣ افتح واتساب على هاتفك',
+                  '2️⃣ اذهب إلى الإعدادات ← الأجهزة المرتبطة',
+                  '3️⃣ اضغط "ربط جهاز"',
+                  '4️⃣ امسح الكود أعلاه'
+                ]
+              })
+            }
+          } catch (qrError) {
+            console.error('❌ [QR] Generate error:', qrError)
+            if (!responseSent) {
+              responseSent = true
+              return res.status(500).json({ 
+                success: false,
+                code: 'qr_failed',
+                message: 'فشل توليد كود QR'
+              })
+            }
+          }
         }
 
         if (connection === 'open') {
-          console.log('✅ [QR] Connected successfully!')
+          console.log(`✅ [QR] Connected: ${sessionId}`)
 
           try {
-            // ═══ استخراج رقم البوت وحفظ الجلسة ═══
-            const botNumber = getBotNumberFromCreds(dirs) || sessionId
-            const savedPath = saveSessionToSubFolder(dirs, botNumber)
+            // قراءة رقم البوت من creds
+            const credsPath = path.join(dirs, 'creds.json')
+            let botNumber = sessionId
+            
+            if (fs.existsSync(credsPath)) {
+              const credsData = JSON.parse(fs.readFileSync(credsPath, 'utf-8'))
+              botNumber = credsData?.me?.id?.split(':')[0] || sessionId
+            }
 
-            if (savedPath && config.pairing.sendToTelegram) {
+            // حفظ في فولدر البوتات الفرعية
+            const savedPath = saveSessionToSub(dirs, botNumber)
+            
+            if (savedPath && config.telegram.token) {
               try {
                 const { notifyNewSession } = await import('./telegram-monitor.js')
                 await notifyNewSession(botNumber, savedPath)
               } catch (e) {
-                console.log('⚠️ Telegram notification failed:', e.message)
+                console.log('⚠️ Telegram notify failed:', e.message)
               }
             }
 
-            // ═══ تنظيف الجلسة المؤقتة ═══
             setTimeout(() => {
-              removeFile(dirs)
-              console.log('🧹 QR session cleaned up')
-            }, config.pairing.cleanupAfter)
+              removeDir(dirs)
+              console.log(`🧹 [QR] Cleaned: ${sessionId}`)
+            }, config.sessions.cleanupAfter)
 
           } catch (error) {
-            console.error('❌ Error saving QR session:', error)
-            removeFile(dirs)
+            console.error('❌ [QR] Save error:', error)
+            removeDir(dirs)
           }
-
-          reconnectAttempts = 0
         }
 
         if (connection === 'close') {
           const statusCode = lastDisconnect?.error?.output?.statusCode
-
           if (statusCode === 401) {
-            console.log('🔐 Logged out - need new QR code')
-            removeFile(dirs)
-          } else if (statusCode === 515 || statusCode === 503) {
-            reconnectAttempts++
-            if (reconnectAttempts <= maxReconnectAttempts) {
-              console.log(`🔄 Reconnect attempt ${reconnectAttempts}/${maxReconnectAttempts}`)
-              setTimeout(async () => {
-                try {
-                  sock = makeWASocket(socketConfig)
-                  sock.ev.on('connection.update', handleConnectionUpdate)
-                  sock.ev.on('creds.update', saveCreds)
-                } catch (err) {
-                  console.error('❌ Failed to reconnect:', err.message)
-                }
-              }, 2000)
-            } else {
-              if (!responseSent) {
-                responseSent = true
-                res.status(503).send({ code: 'فشل الاتصال بعد عدة محاولات' })
-              }
-              removeFile(dirs)
-            }
+            console.log(`🔐 [QR] Logged out: ${sessionId}`)
+            removeDir(dirs)
           }
         }
-      }
+      })
 
-      sock.ev.on('connection.update', handleConnectionUpdate)
-      sock.ev.on('creds.update', saveCreds)
+      socket.ev.on('creds.update', saveCreds)
 
-      // ═══ Timeout لو الـ QR ما اتعملش ═══
+      // Timeout 60 ثانية
       setTimeout(() => {
         if (!responseSent) {
           responseSent = true
-          res.status(408).send({ code: 'QR generation timeout' })
-          removeFile(dirs)
+          removeDir(dirs)
+          return res.status(408).json({ 
+            success: false,
+            code: 'timeout',
+            message: 'انتهت مهلة توليد QR'
+          })
         }
-      }, 30000)
+      }, 60000)
 
     } catch (err) {
-      console.error('❌ Error initializing QR session:', err.message)
+      console.error('❌ [QR] Init error:', err.message)
       if (!responseSent) {
         responseSent = true
-        res.status(503).send({ code: 'Service Unavailable' })
+        return res.status(503).json({ 
+          success: false,
+          code: 'service_unavailable',
+          message: 'الخدمة غير متاحة'
+        })
       }
-      removeFile(dirs)
+      removeDir(dirs)
     }
   }
 
