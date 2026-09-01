@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🕸 Sukuna Platform | لوحة التحكم</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Tajawal', sans-serif;
+  }
+
+  :root {
+    --primary: #a855f7;
+    --primary-dark: #7e22ce;
+    --accent: #f59e0b;
+    --dark-bg: #0a0a0f;
+    --card-bg: rgba(20, 20, 30, 0.7);
+    --border: rgba(168, 85, 247, 0.2);
+    --text: #e4e4e7;
+    --text-muted: #9ca3af;
+    --success: #10b981;
+    --danger: #ef4444;
+  }
+
+  body {
+    background: var(--dark-bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ═══ خلفية متحركة ═══ */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(126, 34, 206, 0.08) 0%, transparent 70%);
+    z-index: -1;
+    animation: bgShift 20s ease-in-out infinite;
+  }
+
+  @keyframes bgShift {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(2deg); }
+  }
+
+  /* ═══ الـ Navbar ═══ */
+  .navbar {
+    background: rgba(10, 10, 15, 0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 900;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .logo-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 10px var(--primary));
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 10px;
+    transition: all 0.3s;
+    font-weight: 500;
+  }
+
+  .nav-link:hover {
+    color: var(--primary);
+    background: rgba(168, 85, 247, 0.1);
+  }
+
+  /* ═══ Container ═══ */
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* ═══ Hero Section ═══ */
+  .hero {
+    text-align: center;
+    padding: 3rem 0;
+    position: relative;
+  }
+
+  .hero h1 {
+    font-size: 3.5rem;
+    font-weight: 900;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+  }
+
+  .hero p {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    line-height: 1.8;
+  }
+
+  /* ═══ Stats Cards ═══ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin: 3rem 0;
+  }
+
+  .stat-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+  }
+
+  .stat-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: 0 20px 40px rgba(168, 85, 247, 0.2);
+  }
+
+  .stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 0 15px var(--primary));
+  }
+
+  .stat-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff, var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ═══ Action Grid ═══ */
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 3rem 0;
+  }
+
+  .action-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.4s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(168, 85, 247, 0.1));
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .action-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--primary);
+    box-shadow: 0 30px 60px rgba(168, 85, 247, 0.3);
+  }
+
+  .action-card:hover::after {
+    opacity: 1;
+  }
+
+  .action-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px var(--primary));
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .action-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: #fff;
+  }
+
+  .action-desc {
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+
+  .action-btn {
+    display: inline-block;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .action-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 25px rgba(168, 85, 247, 0.4);
+  }
+
+  /* ═══ Sessions Section ═══ */
+  .section-title {
+    font-size: 2rem;
+    font-weight: 900;
+    margin: 3rem 0 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .section-title::before {
+    content: '';
+    width: 5px;
+    height: 30px;
+    background: linear-gradient(180deg, var(--primary), var(--accent));
+    border-radius: 3px;
+  }
+
+  .sessions-list {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .session-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+  }
+
+  .session-item:hover {
+    border-color: var(--primary);
+    transform: translateX(-5px);
+  }
+
+  .session-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .session-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #fff;
+  }
+
+  .session-details h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .session-details p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .session-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-icon:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  .btn-icon.danger:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+  }
+
+  /* ═══ Empty State ═══ */
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+  }
+
+  /* ═══ Footer ═══ */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    margin-top: 3rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+
+  .footer strong {
+    color: var(--primary);
+  }
+
+  /* ═══ Toast ═══ */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--primary);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 1000;
+    transform: translateX(400px);
+    transition: transform 0.4s;
+  }
+
+  .toast.show {
+    transform: translateX(0);
+  }
+
+  /* ═══ Responsive ═══ */
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2rem; }
+    .nav-links { display: none; }
+    .container { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ Navbar ═══ -->
+<nav class="navbar">
+  <div class="logo">
+    <span class="logo-icon">🕸</span>
+    <span>SUKUNA PLATFORM</span>
+  </div>
+  <div class="nav-links">
+    <a href="#" class="nav-link">الرئيسية</a>
+    <a href="/connect" class="nav-link">التنصيب</a>
+    <a href="#sessions" class="nav-link">الجلسات</a>
+    <a href="#" class="nav-link">الفريق</a>
+  </div>
+</nav>
+
+<!-- ═══ Container ═══ -->
+<div class="container">
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>🕸 منصة سوكونا</h1>
+    <p>منصة متكاملة لإدارة وتشغيل بوتات سوكونا الفرعية. ربط احترافي، جلسات ذكية، ولوحة تحكم شاملة لفريق Shadow Team.</p>
+  </section>
+
+  <!-- Stats -->
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">🤖</div>
+      <div class="stat-label">البوتات النشطة</div>
+      <div class="stat-value" id="stat-bots">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💾</div>
+      <div class="stat-label">الجلسات المحفوظة</div>
+      <div class="stat-value" id="stat-sessions">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-label">وقت التشغيل</div>
+      <div class="stat-value" id="stat-uptime">0s</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🌐</div>
+      <div class="stat-label">الإصدار</div>
+      <div class="stat-value" id="stat-version" style="font-size:1.5rem">2.0</div>
+    </div>
+  </section>
+
+  <!-- Actions -->
+  <section class="action-grid">
+    <div class="action-card" onclick="window.location='/connect'">
+      <div class="action-icon">🚀</div>
+      <div class="action-title">تنصيب بوت فرعي</div>
+      <div class="action-desc">ربط واتساب جديد كـ Sub Bot باستخدام كود Pairing أو QR. الجلسة تُحفظ تلقائياً.</div>
+      <button class="action-btn">ابدأ التنصيب <i class="fas fa-arrow-left"></i></button>
+    </div>
+
+    <div class="action-card" onclick="loadSessions()">
+      <div class="action-icon">📋</div>
+      <div class="action-title">إدارة الجلسات</div>
+      <div class="action-desc">عرض جميع الجلسات المحفوظة، حذف الجلسات القديمة، ومراقبة حالة كل Sub Bot.</div>
+      <button class="action-btn">عرض الجلسات <i class="fas fa-list"></i></button>
+    </div>
+
+    <div class="action-card" onclick="showToast('قريباً: لوحة تحكم الفريق 🎯')">
+      <div class="action-icon">👥</div>
+      <div class="action-title">إدارة الفريق</div>
+      <div class="action-desc">إضافة أعضاء الفريق، تعيين الصلاحيات، ومراقبة نشاط كل مطور داخل المنصة.</div>
+      <button class="action-btn">قريباً <i class="fas fa-clock"></i></button>
+    </div>
+  </section>
+
+  <!-- Sessions -->
+  <section id="sessions">
+    <h2 class="section-title">🗂️ الجلسات النشطة</h2>
+    <div class="sessions-list" id="sessions-list">
+      <div class="empty-state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>جاري تحميل الجلسات...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>© 2026 <strong>Sukuna Platform</strong> — تطوير: <strong>Adam (Shadow)</strong> | Shadow Team 🕸</p>
+  </footer>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ═══ تحميل الإحصائيات ═══
+  async function loadStats() {
+    try {
+      const res = await fetch('/api/stats')
+      const data = await res.json()
+      if (data.success) {
+        document.getElementById('stat-sessions').textContent = data.totalSessions
+        document.getElementById('stat-version').textContent = data.platform.version
+
+        // تنسيق وقت التشغيل
+        const uptime = Math.floor(data.uptime)
+        const h = Math.floor(uptime / 3600)
+        const m = Math.floor((uptime % 3600) / 60)
+        const s = uptime % 60
+        document.getElementById('stat-uptime').textContent =
+          h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${s}s` : `${s}s`
+      }
+    } catch (e) {
+      console.error('Stats error:', e)
+    }
+  }
+
+  // ═══ تحميل الجلسات ═══
+  async function loadSessions() {
+    const list = document.getElementById('sessions-list')
+    try {
+      const res = await fetch('/api/sessions')
+      const data = await res.json()
+
+      if (data.success && data.sessions.length > 0) {
+        list.innerHTML = data.sessions.map(s => `
+          <div class="session-item">
+            <div class="session-info">
+              <div class="session-avatar">${s.number.slice(-2)}</div>
+              <div class="session-details">
+                <h4>📱 +${s.number}</h4>
+                <p>${s.name} • ${s.filesCount} ملف</p>
+              </div>
+            </div>
+            <div class="session-actions">
+              <button class="btn-icon danger" onclick="deleteSession('${s.number}')" title="حذف">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `).join('')
+      } else {
+        list.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>لا توجد جلسات حالياً. ابدأ بتنصيب بوت جديد!</p>
+          </div>
+        `
+      }
+    } catch (e) {
+      list.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>خطأ في التحميل</p></div>`
+    }
+  }
+
+  // ═══ حذف جلسة ═══
+  async function deleteSession(number) {
+    if (!confirm(`هل أنت متأكد من حذف جلسة ${number}؟`)) return
+
+    try {
+      const res = await fetch(`/api/session/${number}`, { method: 'DELETE' })
+      const data = await res.json()
+
+      if (data.success) {
+        showToast('✅ تم الحذف بنجاح')
+        loadSessions()
+        loadStats()
+      } else {
+        showToast('❌ ' + data.message)
+      }
+    } catch (e) {
+      showToast('❌ خطأ: ' + e.message)
+    }
+  }
+
+  // ═══ Toast ═══
+  function showToast(msg) {
+    const toast = document.getElementById('toast')
+    toast.textContent = msg
+    toast.classList.add('show')
+    setTimeout(() => toast.classList.remove('show'), 3000)
+  }
+
+  // ═══ Init ═══
+  loadStats()
+  loadSessions()
+  setInterval(loadStats, 15000)
+  setInterval(loadSessions, 30000)
+</script>
+</body>
+</html>

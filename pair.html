@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🕸 ربط بوت فرعي | Sukuna Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+
+  :root {
+    --primary: #a855f7;
+    --primary-dark: #7e22ce;
+    --accent: #f59e0b;
+    --dark-bg: #0a0a0f;
+    --card-bg: rgba(20, 20, 30, 0.85);
+    --border: rgba(168, 85, 247, 0.3);
+    --text: #e4e4e7;
+    --text-muted: #9ca3af;
+    --success: #10b981;
+    --danger: #ef4444;
+  }
+
+  body {
+    background: var(--dark-bg);
+    color: var(--text);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(168, 85, 247, 0.2) 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(245, 158, 11, 0.15) 0%, transparent 50%);
+    z-index: -1;
+    animation: bgPulse 15s ease-in-out infinite;
+  }
+
+  @keyframes bgPulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  .wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .card {
+    background: var(--card-bg);
+    backdrop-filter: blur(30px);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 3rem;
+    max-width: 600px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+    border-radius: 30px 30px 0 0;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .logo-icon {
+    font-size: 5rem;
+    filter: drop-shadow(0 0 30px var(--primary));
+    animation: pulse 2s ease-in-out infinite;
+    display: inline-block;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin: 1rem 0 0.5rem;
+    background: linear-gradient(135deg, #fff, var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(0,0,0,0.3);
+    padding: 5px;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 700;
+    color: var(--text-muted);
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+
+  .tab.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    box-shadow: 0 5px 20px rgba(168, 85, 247, 0.4);
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+    animation: fadeIn 0.4s;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .input-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+
+  .input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 16px 20px;
+    background: rgba(0,0,0,0.4);
+    border: 2px solid var(--border);
+    border-radius: 15px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-family: inherit;
+    transition: all 0.3s;
+  }
+
+  .input-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.1);
+  }
+
+  .btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(168, 85, 247, 0.5);
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* ═══ نتيجة الكود ═══ */
+  .result-box {
+    display: none;
+    margin-top: 2rem;
+    padding: 2rem;
+    background: rgba(168, 85, 247, 0.1);
+    border: 2px dashed var(--primary);
+    border-radius: 20px;
+    text-align: center;
+    animation: fadeIn 0.5s;
+  }
+
+  .result-box.show {
+    display: block;
+  }
+
+  .code-display {
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: 8px;
+    margin: 1rem 0;
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    user-select: all;
+  }
+
+  .qr-image {
+    max-width: 300px;
+    margin: 1rem auto;
+    display: block;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  .instructions {
+    background: rgba(0,0,0,0.3);
+    padding: 1.25rem;
+    border-radius: 15px;
+    margin-top: 1rem;
+    text-align: right;
+  }
+
+  .instructions h4 {
+    margin-bottom: 0.75rem;
+    color: var(--accent);
+  }
+
+  .instructions ol {
+    padding-right: 1.25rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+
+  .status-msg {
+    text-align: center;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 12px;
+    font-weight: 700;
+  }
+
+  .status-msg.loading {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent);
+  }
+
+  .status-msg.success {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+  }
+
+  .status-msg.error {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+  }
+
+  .back-btn {
+    display: inline-block;
+    margin-top: 1.5rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 700;
+    transition: color 0.3s;
+  }
+
+  .back-btn:hover {
+    color: var(--primary);
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="card">
+    <div class="header">
+      <div class="logo-icon">🕸</div>
+      <h1>تنصيب بوت فرعي</h1>
+      <p class="subtitle">اربط واتساب جديد كـ Sub Bot في ثواني</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('pair')">
+        <i class="fas fa-mobile-alt"></i> كود الربط
+      </button>
+      <button class="tab" onclick="switchTab('qr')">
+        <i class="fas fa-qrcode"></i> QR Code
+      </button>
+    </div>
+
+    <!-- Pairing Tab -->
+    <div class="tab-content active" id="pair-tab">
+      <div class="input-group">
+        <label>📱 رقم الواتساب (بالصيغة الدولية)</label>
+        <input type="tel" id="pair-number" placeholder="201012345678" dir="ltr">
+      </div>
+      <button class="btn" id="pair-btn" onclick="requestPairing()">
+        <i class="fas fa-link"></i> توليد كود الربط
+      </button>
+
+      <div id="pair-status"></div>
+
+      <div class="result-box" id="pair-result">
+        <h3 style="color: var(--accent); margin-bottom: 1rem;">🎯 كود الربط الخاص بك</h3>
+        <div class="code-display" id="pair-code"></div>
+        <button class="btn" onclick="copyCode()" style="margin-top: 1rem; background: rgba(168, 85, 247, 0.2); border: 2px solid var(--primary);">
+          <i class="fas fa-copy"></i> نسخ الكود
+        </button>
+
+        <div class="instructions">
+          <h4>📋 الخطوات:</h4>
+          <ol>
+            <li>افتح واتساب على هاتفك</li>
+            <li>اذهب إلى: <strong>الإعدادات ⚙️ ← الأجهزة المرتبطة 🔗</strong></li>
+            <li>اضغط على <strong>"ربط جهاز"</strong></li>
+            <li>اختر <strong>"الربط برقم الهاتف بدلاً من ذلك"</strong></li>
+            <li>أدخل الكود أعلاه</li>
+          </ol>
+        </div>
+
+        <div class="status-msg loading" id="pair-waiting" style="margin-top: 1rem;">
+          <i class="fas fa-hourglass-half"></i> في انتظار الاتصال...
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Tab -->
+    <div class="tab-content" id="qr-tab">
+      <button class="btn" onclick="requestQR()" id="qr-btn">
+        <i class="fas fa-qrcode"></i> توليد كود QR
+      </button>
+
+      <div id="qr-status"></div>
+
+      <div class="result-box" id="qr-result">
+        <h3 style="color: var(--accent); margin-bottom: 1rem;">📷 امسح الكود بكاميرا واتساب</h3>
+        <img id="qr-image" class="qr-image" src="" alt="QR Code">
+
+        <div class="instructions">
+          <h4>📋 الخطوات:</h4>
+          <ol>
+            <li>افتح واتساب على هاتفك</li>
+            <li>اذهب إلى: <strong>الإعدادات ⚙️ ← الأجهزة المرتبطة 🔗</strong></li>
+            <li>اضغط على <strong>"ربط جهاز"</strong></li>
+            <li>وجّه الكاميرا نحو الكود أعلاه</li>
+          </ol>
+        </div>
+
+        <div class="status-msg loading" id="qr-waiting" style="margin-top: 1rem;">
+          <i class="fas fa-hourglass-half"></i> في انتظار المسح...
+        </div>
+      </div>
+    </div>
+
+    <a href="/" class="back-btn" style="text-align: center; display: block;">
+      <i class="fas fa-arrow-right"></i> العودة للوحة التحكم
+    </a>
+  </div>
+</div>
+
+<script>
+  let currentCode = ''
+  let currentSessionId = null
+  let pollInterval = null
+
+  // ═══ التبديل بين التبويبات ═══
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'))
+    document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active')
+    document.getElementById(`${tab}-tab`).classList.add('active')
+  }
+
+  // ═══ طلب كود الربط ═══
+  async function requestPairing() {
+    const number = document.getElementById('pair-number').value.trim()
+    if (!number || number.length < 8) {
+      showStatus('pair-status', '❌ أدخل رقم صحيح', 'error')
+      return
+    }
+
+    const btn = document.getElementById('pair-btn')
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span> جاري التوليد...'
+
+    try {
+      const res = await fetch(`/api/pair?number=${encodeURIComponent(number)}`)
+      const data = await res.json()
+
+      if (data.success && data.code) {
+        currentCode = data.code
+        document.getElementById('pair-code').textContent = data.code
+        document.getElementById('pair-result').classList.add('show')
+        showStatus('pair-status', '✅ تم التوليد بنجاح!', 'success')
+        startPairingPolling(number)
+      } else {
+        showStatus('pair-status', '❌ ' + (data.message || 'فشل التوليد'), 'error')
+        btn.disabled = false
+        btn.innerHTML = '<i class="fas fa-link"></i> توليد كود الربط'
+      }
+    } catch (e) {
+      showStatus('pair-status', '❌ خطأ: ' + e.message, 'error')
+      btn.disabled = false
+      btn.innerHTML = '<i class="fas fa-link"></i> توليد كود الربط'
+    }
+  }
+
+  // ═══ Polling لـ Pairing ═══
+  function startPairingPolling(number) {
+    let attempts = 0
+    pollInterval = setInterval(async () => {
+      attempts++
+      try {
+        const res = await fetch(`/api/pair?number=${encodeURIComponent(number)}`)
+        const data = await res.json()
+
+        if (data.success && data.stage === 'connected') {
+          clearInterval(pollInterval)
+          const waiting = document.getElementById('pair-waiting')
+          waiting.classList.remove('loading')
+          waiting.classList.add('success')
+          waiting.innerHTML = '✅ تم الربط بنجاح! البوت الفرعي جاهز.'
+
+          setTimeout(() => {
+            alert('🎉 تم التنصيب بنجاح!\n\nعد للوحة التحكم لرؤية البوت الفرعي.')
+            window.location.href = '/'
+          }, 1500)
+        }
+
+        if (attempts > 60) {
+          clearInterval(pollInterval)
+          const waiting = document.getElementById('pair-waiting')
+          waiting.classList.remove('loading')
+          waiting.classList.add('error')
+          waiting.innerHTML = '⏰ انتهت المهلة. حاول مرة أخرى.'
+        }
+      } catch {}
+    }, 3000)
+  }
+
+  // ═══ طلب QR ═══
+  async function requestQR() {
+    const btn = document.getElementById('qr-btn')
+    btn.disabled = true
+    btn.innerHTML = '<span class="spinner"></span> جاري التوليد...'
+
+    try {
+      const res = await fetch('/api/qr')
+      const data = await res.json()
+
+      if (data.success && data.qr) {
+        currentSessionId = data.sessionId
+        document.getElementById('qr-image').src = data.qr
+        document.getElementById('qr-result').classList.add('show')
+        showStatus('qr-status', '✅ تم توليد الكود بنجاح!', 'success')
+        startQRPolling()
+      } else {
+        showStatus('qr-status', '❌ ' + (data.message || 'فشل'), 'error')
+        btn.disabled = false
+        btn.innerHTML = '<i class="fas fa-qrcode"></i> توليد كود QR'
+      }
+    } catch (e) {
+      showStatus('qr-status', '❌ خطأ: ' + e.message, 'error')
+      btn.disabled = false
+      btn.innerHTML = '<i class="fas fa-qrcode"></i> توليد كود QR'
+    }
+  }
+
+  // ═══ Polling لـ QR ═══
+  function startQRPolling() {
+    let attempts = 0
+    pollInterval = setInterval(async () => {
+      attempts++
+      if (!currentSessionId) return
+
+      try {
+        const res = await fetch(`/api/qr/status/${currentSessionId}`)
+        const data = await res.json()
+
+        if (data.success && data.status === 'connected') {
+          clearInterval(pollInterval)
+          const waiting = document.getElementById('qr-waiting')
+          waiting.classList.remove('loading')
+          waiting.classList.add('success')
+          waiting.innerHTML = `✅ تم الربط بنجاح! رقم البوت: +${data.number}`
+
+          setTimeout(() => {
+            alert('🎉 تم التنصيب بنجاح!')
+            window.location.href = '/'
+          }, 1500)
+        }
+
+        if (attempts > 30) {
+          clearInterval(pollInterval)
+          const waiting = document.getElementById('qr-waiting')
+          waiting.classList.remove('loading')
+          waiting.classList.add('error')
+          waiting.innerHTML = '⏰ انتهت المهلة. حاول مرة أخرى.'
+        }
+      } catch {}
+    }, 3000)
+  }
+
+  // ═══ نسخ الكود ═══
+  function copyCode() {
+    if (!currentCode) return
+    navigator.clipboard.writeText(currentCode.replace(/-/g, '')).then(() => {
+      alert('✅ تم نسخ الكود: ' + currentCode)
+    }).catch(() => {
+      alert('الكود: ' + currentCode)
+    })
+  }
+
+  // ═══ عرض رسالة الحالة ═══
+  function showStatus(id, msg, type) {
+    const el = document.getElementById(id)
+    el.innerHTML = `<div class="status-msg ${type}">${msg}</div>`
+    if (type === 'success') {
+      setTimeout(() => { el.innerHTML = '' }, 3000)
+    }
+  }
+</script>
+</body>
+</html>
