@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUKUNA Platform | لوحة التحكم</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root {
+  --primary: #8b0000;
+  --secondary: #dc143c;
+  --gold: #ffd700;
+  --dark: #0a0a0a;
+  --darker: #000000;
+  --card-bg: rgba(20, 0, 0, 0.85);
+  --text: #f5f5f5;
+  --muted: #888;
+  --border: rgba(139, 0, 0, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #000 0%, #1a0000 50%, #0a0a0a 100%);
+  color: var(--text);
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* خلفية متحركة */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(139, 0, 0, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(220, 20, 60, 0.1) 0%, transparent 50%),
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><path d="M50 5 L61 39 L95 39 L68 60 L79 95 L50 73 L21 95 L32 60 L5 39 L39 39 Z" fill="none" stroke="rgba(139,0,0,0.1)" stroke-width="1"/></svg>');
+  background-size: 200px 200px;
+  animation: bgMove 60s linear infinite;
+  z-index: -1;
+}
+
+@keyframes bgMove {
+  0% { background-position: 0 0, 0 0, 0 0; }
+  100% { background-position: 200px 200px, -200px -200px, 200px -200px; }
+}
+
+/* Navbar */
+.navbar {
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 30px rgba(139, 0, 0, 0.2);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1.5rem;
+  font-weight: 900;
+  background: linear-gradient(90deg, var(--gold), var(--secondary), var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 2px;
+}
+
+.logo-icon {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(220, 20, 60, 0.5);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(220, 20, 60, 0.5); }
+  50% { box-shadow: 0 0 40px rgba(220, 20, 60, 0.8); }
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s;
+  position: relative;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.nav-links a:hover {
+  color: var(--gold);
+  background: rgba(139, 0, 0, 0.2);
+}
+
+.nav-links a.active {
+  color: var(--gold);
+  background: rgba(139, 0, 0, 0.3);
+}
+
+/* Hero Section */
+.hero {
+  padding: 4rem 2rem;
+  text-align: center;
+  position: relative;
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  background: linear-gradient(90deg, var(--gold), #fff, var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: glow 3s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); }
+  50% { filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.8)); }
+}
+
+.hero p {
+  font-size: 1.3rem;
+  color: var(--muted);
+  max-width: 700px;
+  margin: 0 auto 2rem;
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-top: 3rem;
+  flex-wrap: wrap;
+}
+
+.stat-box {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  padding: 1.5rem 2.5rem;
+  border-radius: 15px;
+  min-width: 180px;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+}
+
+.stat-box:hover {
+  transform: translateY(-5px);
+  border-color: var(--gold);
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--gold);
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* Cards Grid */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.section-title {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: var(--gold);
+  font-weight: 700;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--secondary), transparent);
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+  transition: left 0.6s;
+}
+
+.card:hover::before {
+  left: 100%;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+  border-color: var(--gold);
+  box-shadow: 0 20px 60px rgba(139, 0, 0, 0.4);
+}
+
+.card-icon {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: white;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 10px 30px rgba(220, 20, 60, 0.4);
+  transition: all 0.3s;
+}
+
+.card:hover .card-icon {
+  transform: rotate(360deg) scale(1.1);
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--gold);
+}
+
+.card-description {
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+
+.card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+}
+
+.card-btn:hover {
+  transform: translateX(-5px);
+  box-shadow: 0 10px 25px rgba(220, 20, 60, 0.5);
+}
+
+/* Footer */
+footer {
+  background: rgba(0, 0, 0, 0.95);
+  border-top: 1px solid var(--border);
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+footer .heart {
+  color: var(--secondary);
+  animation: heartBeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartBeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 2rem; }
+  .nav-links { display: none; }
+  .hero-stats { gap: 1rem; }
+  .stat-box { min-width: 140px; padding: 1rem 1.5rem; }
+  .stat-value { font-size: 1.8rem; }
+}
+
+/* Loading */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--gold);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="logo">
+    <div class="logo-icon">
+      <i class="fas fa-spider"></i>
+    </div>
+    <span>SUKUNA</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="/" class="active"><i class="fas fa-home"></i> الرئيسية</a></li>
+    <li><a href="/pair"><i class="fas fa-link"></i> ربط Pair</a></li>
+    <li><a href="/qr"><i class="fas fa-qrcode"></i> ربط QR</a></li>
+    <li><a href="/sessions"><i class="fas fa-database"></i> الجلسات</a></li>
+    <li><a href="/team"><i class="fas fa-users"></i> الفريق</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <h1>🕸 منصة سوكونا 🕸</h1>
+  <p>منصة تنصيب احترافية لإدارة بوتات WhatsApp الخاصة بفريق SUKUNA. ربط آمن، إدارة سهلة، وتحكم كامل.</p>
+  
+  <div class="hero-stats">
+    <div class="stat-box">
+      <div class="stat-value" id="sessionCount">...</div>
+      <div class="stat-label">📱 بوتات نشطة</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value" id="uptime">...</div>
+      <div class="stat-label">⏱️ وقت التشغيل</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">24/7</div>
+      <div class="stat-label">🛡️ حماية مستمرة</div>
+    </div>
+  </div>
+</section>
+
+<!-- Cards -->
+<div class="container">
+  <h2 class="section-title">🚀 اختر طريقة التنصيب</h2>
+  
+  <div class="cards-grid">
+    
+    <!-- Pair Card -->
+    <div class="card" onclick="location.href='/pair'">
+      <div class="card-icon">
+        <i class="fas fa-key"></i>
+      </div>
+      <h3 class="card-title">🔢 ربط بكود Pair</h3>
+      <p class="card-description">
+        احصل على كود ربط من 8 أرقام لاستخدامه في واتساب. الطريقة الأسرع والأكثر موثوقية لتنصيب البوت.
+      </p>
+      <button class="card-btn">
+        <i class="fas fa-arrow-left"></i>
+        ابدأ الآن
+      </button>
+    </div>
+
+    <!-- QR Card -->
+    <div class="card" onclick="location.href='/qr'">
+      <div class="card-icon">
+        <i class="fas fa-qrcode"></i>
+      </div>
+      <h3 class="card-title">🔳 ربط بكود QR</h3>
+      <p class="card-description">
+        امسح كود QR بكاميرا هاتفك للربط السريع. مناسب للأجهزة التي تدعم المسح الضوئي.
+      </p>
+      <button class="card-btn">
+        <i class="fas fa-arrow-left"></i>
+        ابدأ الآن
+      </button>
+    </div>
+
+    <!-- Sessions Card -->
+    <div class="card" onclick="location.href='/sessions'">
+      <div class="card-icon">
+        <i class="fas fa-database"></i>
+      </div>
+      <h3 class="card-title">📂 إدارة الجلسات</h3>
+      <p class="card-description">
+        عرض وإدارة جميع جلسات البوتات الفرعية. حذف، تحديث، ومراقبة الجلسات النشطة.
+      </p>
+      <button class="card-btn">
+        <i class="fas fa-arrow-left"></i>
+        إدارة الآن
+      </button>
+    </div>
+
+    <!-- Team Card -->
+    <div class="card" onclick="location.href='/team'">
+      <div class="card-icon">
+        <i class="fas fa-users-cog"></i>
+      </div>
+      <h3 class="card-title">👥 فريق التطوير</h3>
+      <p class="card-description">
+        تعرّف على فريق SUKUNA - المطورين والمبرمجين المحترفين الذين يصنعون المعجزات.
+      </p>
+      <button class="card-btn">
+        <i class="fas fa-arrow-left"></i>
+        اكتشف
+      </button>
+    </div>
+
+    <!-- API Card -->
+    <div class="card" onclick="showAPI()">
+      <div class="card-icon">
+        <i class="fas fa-code"></i>
+      </div>
+      <h3 class="card-title">⚡ API & Developers</h3>
+      <p class="card-description">
+        واجهة برمجية قوية للمطورين. دمج المنصة مع تطبيقاتك وأنظمتك الخاصة.
+      </p>
+      <button class="card-btn">
+        <i class="fas fa-terminal"></i>
+        التوثيق
+      </button>
+    </div>
+
+    <!-- Support Card -->
+    <div class="card" onclick="showSupport()">
+      <div class="card-icon">
+        <i class="fas fa-headset"></i>
+      </div>
+      <h3 class="card-title">🎧 الدعم الفني</h3>
+      <p class="card-description">
+        فريق دعم فني احترافي على مدار الساعة. مساعدة سريعة في حل جميع المشاكل.
+      </p>
+      <button class="card-btn">
+        <i class="fas fa-comments"></i>
+        تواصل معنا
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 SUKUNA Platform | Developed with <span class="heart">❤</span> by Team SUKUNA</p>
+  <p style="margin-top: 0.5rem; font-size: 0.85rem;">👑 Adam (Shadow) - Lead Developer</p>
+</footer>
+
+<script>
+async function loadStats() {
+  try {
+    const res = await fetch('/api/stats')
+    const data = await res.json()
+    if (data.success) {
+      document.getElementById('sessionCount').textContent = data.data.totalSessions
+      
+      const uptime = Math.floor(data.data.uptime)
+      const h = Math.floor(uptime / 3600)
+      const m = Math.floor((uptime % 3600) / 60)
+      document.getElementById('uptime').textContent = `${h}h ${m}m`
+    }
+  } catch (e) {
+    document.getElementById('sessionCount').textContent = '0'
+    document.getElementById('uptime').textContent = '0m'
+  }
+}
+
+function showAPI() {
+  alert('🔗 API Endpoints:\n\nGET /api/stats - إحصائيات المنصة\nGET /api/sessions - قائمة الجلسات\nDELETE /api/session/:num - حذف جلسة\nGET /pair?number=xxx - توليد Pair\nGET /qr - توليد QR')
+}
+
+function showSupport() {
+  alert('🎧 للدعم الفني:\n\n📱 تواصل عبر قنواتنا الرسمية\n💬 جروبات التليجرام الخاصة بالتيم\n👑 المطور: Adam (Shadow)')
+}
+
+loadStats()
+setInterval(loadStats, 30000)
+</script>
+
+</body>
+</html>
